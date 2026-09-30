@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اسکول چلیں – Urdu Std 5 (Kerala SCERT)</title>
+<!-- All libraries come from CDNs so the file works as-is on GitHub Pages -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<style>
+  :root{--g:#2f9e44;--y:#ffc933;--r:#e63946;--b:#3b82f6;--ink:#1b2a41}
+  body{font-family:'Noto Sans Malayalam',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+       background:linear-gradient(#cfeaff,#fff8d6 55%,#d6f5dc)}
+  /* Urdu text: Nastaliq needs generous line-height so marks are not clipped */
+  .ur{font-family:'Noto Nastaliq Urdu','Amiri',serif;line-height:2.3;direction:rtl}
+  .card{background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:5px 5px 0 var(--ink)}
+  .btn{border:3px solid var(--ink);border-radius:16px;font-weight:700;padding:.4rem .9rem;background:var(--y);box-shadow:3px 3px 0 var(--ink);transition:transform .1s}
+  .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  .tab{border:3px solid var(--ink);border-radius:14px;padding:.35rem .8rem;background:#fff;font-weight:700;white-space:nowrap}
+  .tab.on{background:var(--g);color:#fff}
+  .chip{border:3px solid var(--ink);border-radius:14px;background:#fff;padding:.1rem .8rem;cursor:pointer;font-size:1.6rem;user-select:none}
+  .chip:hover{background:#fff3bf}.chip.ok{background:#b2f2bb}.chip.sel{background:#a5d8ff}.chip.used{opacity:.25;pointer-events:none}
+  .slot{min-width:3.2rem;height:4rem;border:3px dashed var(--ink);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:#f8f9fa}
+  .w{cursor:pointer;border-radius:8px;padding:0 .15rem}.w:hover{background:#ffec99}
+  .shake{animation:sh .4s}@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .bob{animation:bob 2.2s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-8px)}}
+  @media(prefers-reduced-motion:reduce){.bob,.shake{animation:none}}
+  #sheet{position:fixed;left:0;right:0;bottom:0;transform:translateY(110%);transition:transform .25s;z-index:20}
+  #sheet.open{transform:none}
+</style>
+</head>
+<body class="pb-40">
+
+<header class="text-center pt-4 px-3">
+  <div class="text-5xl bob" aria-hidden="true">🏫🌱</div>
+  <h1 class="ur text-4xl font-bold" style="color:var(--r)">اسکول چلیں</h1>
+  <p class="font-bold">ഉർദു – അഞ്ചാം ക്ലാസ് · യൂണിറ്റ് 2 · പാഠം 2 (പേജ് 52–59)</p>
+  <p class="font-bold mt-1">⭐ <span id="stars">0</span> നക്ഷത്രങ്ങൾ</p>
+</header>
+
+<nav class="flex gap-2 overflow-x-auto px-3 py-3 max-w-3xl mx-auto" id="nav">
+  <button class="tab on" data-t="story"><i class="fa-solid fa-book-open"></i> കഥ</button>
+  <button class="tab" data-t="dict"><i class="fa-solid fa-language"></i> നിഘണ്ടു</button>
+  <button class="tab" data-t="games"><i class="fa-solid fa-puzzle-piece"></i> കളികൾ</button>
+  <button class="tab" data-t="quiz"><i class="fa-solid fa-circle-question"></i> ക്വിസ്</button>
+  <button class="tab" data-t="card"><i class="fa-solid fa-cake-candles"></i> ആശംസാ കാർഡ്</button>
+</nav>
+
+<main id="app" class="max-w-3xl mx-auto px-3"></main>
+
+<!-- Word meaning bottom sheet -->
+<div id="sheet" class="card mx-auto max-w-md p-4 text-center" style="border-radius:22px 22px 0 0"></div>
+<div id="toast" class="fixed top-3 left-1/2 -translate-x-1/2 z-30 hidden card px-4 py-2 text-sm font-bold text-center max-w-[92vw]"></div>
+
+<script>
+/* ============ 1. DATA (all from Lesson 2, pp. 52–59) ============ */
+// Dictionary: urdu -> [transliteration, Malayalam meaning, emoji]
+const D={
+ 'اسمبلی':['assembly','അസംബ്ലി','🏫'],'ختم':['khatm','തീർന്നു / അവസാനിച്ചു','🏁'],'ہوا':['hua','ആയി','✔️'],
+ 'ٹیچر':['teacher','ടീച്ചർ','👩‍🏫'],'کلاس':['class','ക്ലാസ്സ്','🏫'],'میں':['mein / main','ൽ (in) / ഞാൻ','📍'],
+ 'آئیں':['aayeen','വന്നു (ആദരവോടെ)','🚶‍♀️'],'روبی':['Ruby','റൂബി (പെൺകുട്ടി)','👧'],'کے':['ke','ന്റെ','🔗'],
+ 'ہاتھ':['haath','കൈ','✋'],'ایک':['ek','ഒരു / ഒന്ന്','1️⃣'],'پودا':['paudha','ചെടി','🌱'],'ہے':['hai','ആണ് / ഉണ്ട്','✔️'],
+ 'وہ':['woh','അവൾ / അത്','👉'],'لے کر':['le kar','എടുത്തുകൊണ്ട്','🤲'],'پاس':['paas','അടുത്ത്','📍'],'آئی':['aayi','വന്നു','🚶‍♀️'],
+ 'آداب':['aadaab','നമസ്കാരം','🙏'],'آپ':['aap','നിങ്ങൾ','🧑'],'کیا':['kya','എന്ത്','❓'],'یہ':['yeh','ഇത്','👇'],
+ 'کون سا':['kaun sa','ഏത്','❓'],'امرود':['amrood','പേരയ്ക്ക','🍐'],'کا':['ka','ന്റെ','🔗'],'اس':['is','ഇതിന്റെ','👉'],
+ 'کریں گی':['karengi','ചെയ്യും','🛠️'],'آج':['aaj','ഇന്ന്','📅'],'میرا':['mera','എന്റെ','🙋'],'جنم دن':['janam din','ജന്മദിനം','🎂'],
+ 'اسے':['ise','അതിനെ','👉'],'اسکول':['school','സ്കൂൾ','🏫'],'باغ':['baagh','തോട്ടം','🌳'],'لگاؤں گی':['lagaaungi','നടും','🌱'],
+ 'شاباش':['shaabaash','കൊള്ളാം! ശബാഷ്','👏'],'مبارک':['mubaarak','ആശംസകൾ','🎉'],'ہو':['ho','ആകട്ടെ','✔️'],'شکریہ':['shukriya','നന്ദി','🙏'],
+ 'پھول':['phool','പൂവ്','🌸'],'تتلی':['titli','ചിത്രശലഭം','🦋'],'گلاب':['gulaab','റോസാപ്പൂ','🌹'],'سورج مکھی':['sooraj mukhi','സൂര്യകാന്തി','🌻'],
+ 'پتا':['patta','ഇല','🍃'],'آم':['aam','മാങ്ങ','🥭'],'غبارہ':['ghubbaara','ബലൂൺ','🎈'],'تربوز':['tarbooz','തണ്ണിമത്തൻ','🍉'],
+ 'سیب':['seb','ആപ്പിൾ','🍎'],'کیلا':['kela','വാഴപ്പഴം','🍌'],'انڈا':['anda','മുട്ട','🥚'],'چھتری':['chhatri','കുട','☂️'],
+ 'ہرا':['hara','പച്ച','🟩'],'کالا':['kaala','കറുപ്പ്','⬛'],'سفید':['safed','വെള്ള','⬜'],'نیلا':['neela','നീല','🟦'],'پیلا':['peela','മഞ്ഞ','🟨'],'لال':['laal','ചുവപ്പ്','🟥'],
+ 'ہری':['hari','പച്ച (സ്ത്രീലിംഗം)','🟩'],'کالی':['kaali','കറുപ്പ് (സ്ത്രീലിംഗം)','⬛'],'نیلی':['neeli','നീല (സ്ത്രീലിംഗം)','🟦'],'پیلی':['peeli','മഞ്ഞ (സ്ത്രീലിംഗം)','🟨'],
+ 'امی':['ammi','അമ്മ','👩'],'بیٹی':['beti','മകൾ','👧'],'بہت اچھا':['bahut achha','വളരെ നന്നായി','👍']
+};
+// Story pages (book p.52, 53, 54). s = speaker, u = Urdu, t = transliteration, m = Malayalam
+const S=[
+ {t:'سبق ۲',pg:52,art:'🏫<br>👩‍🏫🧒🧒🧒<br>🪴',lines:[
+  {u:'اسمبلی ختم ہوا۔',t:'Assembly khatm hua.',m:'അസംബ്ലി കഴിഞ്ഞു.'},
+  {u:'ٹیچر کلاس میں آئیں۔',t:'Teacher class mein aayeen.',m:'ടീച്ചർ ക്ലാസ്സിൽ വന്നു.'},
+  {u:'روبی کے ہاتھ میں ایک پودا ہے۔',t:'Ruby ke haath mein ek paudha hai.',m:'റൂബിയുടെ കയ്യിൽ ഒരു ചെടിയുണ്ട്.'},
+  {u:'وہ پودا لے کر ٹیچر کے پاس آئی۔',t:'Woh paudha le kar teacher ke paas aayi.',m:'അവൾ ചെടിയുമായി ടീച്ചറുടെ അടുത്തേക്ക് വന്നു.'}]},
+ {t:'مبارک ہو!',pg:53,art:'👩‍🏫 👧🪴<br>🧒🧒🧒',lines:[
+  {s:'روبی',u:'آداب ٹیچر!',t:'Aadaab teacher!',m:'നമസ്കാരം ടീച്ചർ!'},
+  {s:'ٹیچر',u:'آداب! آپ کے ہاتھ میں کیا ہے؟',t:'Aadaab! Aap ke haath mein kya hai?',m:'നമസ്കാരം! നിങ്ങളുടെ കയ്യിൽ എന്താണ്?'},
+  {s:'روبی',u:'یہ ایک پودا ہے۔',t:'Yeh ek paudha hai.',m:'ഇതൊരു ചെടിയാണ്.'},
+  {s:'ٹیچر',u:'یہ کون سا پودا ہے؟',t:'Yeh kaun sa paudha hai?',m:'ഇത് ഏത് ചെടിയാണ്?'},
+  {s:'روبی',u:'یہ امرود کا پودا ہے۔',t:'Yeh amrood ka paudha hai.',m:'ഇത് പേരച്ചെടിയാണ്.'}]},
+ {t:'شاباش!',pg:54,art:'🌳🏡<br>👧🧒🧒🪴<br>👩‍🏫',lines:[
+  {s:'ٹیچر',u:'آپ اس کا کیا کریں گی؟',t:'Aap is ka kya karengi?',m:'നിങ്ങൾ ഇതുകൊണ്ട് എന്ത് ചെയ്യും?'},
+  {s:'روبی',u:'آج میرا جنم دن ہے۔',t:'Aaj mera janam din hai.',m:'ഇന്ന് എന്റെ ജന്മദിനമാണ്.'},
+  {s:'روبی',u:'میں اسے اسکول کے باغ میں لگاؤں گی۔',t:'Main ise school ke baagh mein lagaaungi.',m:'ഞാൻ ഇത് സ്കൂൾ തോട്ടത്തിൽ നടും.'},
+  {s:'ٹیچر',u:'شاباش! جنم دن مبارک ہو۔',t:'Shaabaash! Janam din mubaarak ho.',m:'കൊള്ളാം! ജന്മദിനാശംസകൾ.'},
+  {s:'روبی',u:'شکریہ ٹیچر!',t:'Shukriya teacher!',m:'നന്ദി ടീച്ചർ!'}]}
+];
+// Spelling words (letters listed separately for the drag game)
+const SP=[['پودا',['پ','و','د','ا']],['پھول',['پھ','و','ل']],['تتلی',['ت','ت','ل','ی']],['باغ',['ب','ا','غ']],
+ ['گلاب',['گ','ل','ا','ب']],['امرود',['ا','م','ر','و','د']],['کیلا',['ک','ی','ل','ا']],['سیب',['س','ی','ب']]];
+// Colour sentences (p.55–56). f = feminine noun, so colour changes: کالی / کالا
+const CF={'ہرا':'ہری','کالا':'کالی','نیلا':'نیلی','پیلا':'پیلی'};
+const COLHEX={'ہرا':'#2f9e44','کالا':'#222','سفید':'#f1f3f5','نیلا':'#2563eb','پیلا':'#facc15','لال':'#e63946'};
+const CI=[['🎈','غبارہ','نیلا'],['🍉','تربوز','ہرا'],['🍎','سیب','لال'],['🍌','کیلا','پیلا'],['🥚','انڈا','سفید'],
+ ['☂️','چھتری','کالا',1],['🌹','گلاب','لال'],['🌻','سورج مکھی','پیلا'],['🍃','پتا','ہرا'],['🦋','تتلی','کالا',1]];
+const OR=[['روبی کے ہاتھ میں ایک پودا ہے'],['میں اسے اسکول کے باغ میں لگاؤں گی'],['آج میرا جنم دن ہے'],['یہ امرود کا پودا ہے']];
+const Q=[ // [Malayalam question, Urdu shown, options, answer index]
+ ['ടീച്ചർ ___ ൽ വന്നു. (ٹیچر ___ میں آئیں۔)',null,['کلاس','باغ','سیب'],0],
+ ['റൂബിയുടെ കയ്യിൽ എന്താണ്?','روبی کے ہاتھ میں کیا ہے؟',['پودا','غبارہ','انڈا'],0],
+ ['ഏത് ചെടിയാണ് റൂബി കൊണ്ടുവന്നത്?','یہ کون سا پودا ہے؟',['آم کا','امرود کا','گلاب کا'],1],
+ ['റൂബി ചെടി എവിടെ നടും?','روبی پودا کہاں لگائے گی؟',['اسکول کے باغ میں','کلاس میں','گھر میں'],0],
+ ['ഇന്ന് റൂബിക്ക് എന്താണ് വിശേഷം?','آج میرا ___ ہے۔',['جنم دن','اسمبلی','باغ'],0],
+ ['"شکریہ" എന്നാൽ?',null,['നന്ദി','നമസ്കാരം','കൊള്ളാം'],0],
+ ['ചുവന്ന ആപ്പിൾ: یہ ___ سیب ہے۔',null,['ہرا','لال','کالا'],1],
+ ['കറുത്ത ചിത്രശലഭം: یہ کالی ___ ہے۔',null,['تتلی','غبارہ','انڈا'],0]];
+
+/* ============ 2. HELPERS ============ */
+const $=s=>document.querySelector(s), app=$('#app');
+let stars=0, warned=false, V=null;
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+function toast(m,ms=3500){const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),ms)}
+function win(m='ശരി! 🎉'){stars++;$('#stars').textContent=stars;toast(m,1800);if(window.confetti)confetti({particleCount:110,spread:75,origin:{y:.7}})}
+
+/* Text-to-speech: picks an Urdu voice (ur-PK) if the device has one */
+function pickVoice(){const vs=speechSynthesis.getVoices();V=vs.find(v=>v.lang.replace('_','-').toLowerCase()==='ur-pk')||vs.find(v=>v.lang.toLowerCase().startsWith('ur'))||null}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}
+function say(text,cb){
+  if(!('speechSynthesis' in window)){toast('ഈ ബ്രൗസർ ശബ്ദം പിന്തുണയ്ക്കുന്നില്ല. Chrome ഉപയോഗിക്കുക.');return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.replace(/___/g,' '));u.lang='ur-PK';u.rate=.75;if(V)u.voice=V;u.onend=cb||null;
+  speechSynthesis.speak(u);
+  if(!V&&!warned){warned=true;toast('ഉർദു ശബ്ദം കേൾക്കുന്നില്ലെങ്കിൽ: ഫോൺ Settings → Text-to-speech-ൽ Urdu (ur-PK) ഇൻസ്റ്റാൾ ചെയ്യുക.',7000)}
+}
+// Split a line into words, joining known two-word phrases (e.g. جنم دن)
+function tokens(line){const p=line.replace(/[۔؟!،:?]/g,'').split(' ').filter(Boolean),o=[];
+  for(let i=0;i<p.length;i++){if(i<p.length-1&&D[p[i]+' '+p[i+1]]){o.push(p[i]+' '+p[i+1]);i++}else o.push(p[i])}return o}
+function wordSpans(line){return line.split(' ').length&&tokens(line).map(w=>`<span class="w" onclick="showWord('${w}')">${w}</span>`).join(' ')+(/[۔؟!]/.test(line)?line.match(/[۔؟!]+$/)||'':'')}
+function showWord(w){const d=D[w],s=$('#sheet');
+  s.innerHTML=`<button class="float-left btn" onclick="$('#sheet').classList.remove('open')">✕</button>
+   <div class="text-5xl">${d?d[2]:'❔'}</div><div class="ur text-4xl font-bold">${w}</div>
+   <div class="text-lg">${d?d[0]:''}</div><div class="text-2xl font-bold" style="color:var(--g)">${d?d[1]:'അർത്ഥം നിഘണ്ടുവിൽ ഇല്ല'}</div>
+   <button class="btn mt-2" onclick="say('${w}')"><i class="fa-solid fa-volume-high"></i> കേൾക്കാം</button>`;
+  s.classList.add('open');say(w)}
+
+/* ============ 3. TABS ============ */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  $('#sheet').classList.remove('open');speechSynthesis.cancel();({story:story,dict:dict,games:games,quiz:quiz,card:card})[b.dataset.t]()});
+
+/* ============ 4. STORY FLIPBOOK ============ */
+let pg=0,showT=true,showM=true;
+function story(){const p=S[pg];
+  app.innerHTML=`<div class="card p-4">
+   <div class="flex justify-between items-center"><span class="font-bold">പേജ് ${p.pg}</span>
+    <span class="ur text-3xl font-bold" style="color:var(--r)">${p.t}</span></div>
+   <div class="text-6xl text-center my-3 leading-tight bob" aria-hidden="true">${p.art}</div>
+   <div class="space-y-2">${p.lines.map((l,i)=>`<div class="rounded-2xl p-2" style="background:#fff9db">
+     <div class="flex flex-row-reverse items-center gap-2"><button class="btn shrink-0" aria-label="കേൾക്കാം" onclick="say(S[pg].lines[${i}].u)"><i class="fa-solid fa-volume-high"></i></button>
+      <div class="ur text-2xl sm:text-3xl flex-1">${l.s?`<b style="color:var(--b)">${l.s}:</b> `:''}${wordSpans(l.u)}</div></div>
+     ${showT?`<div class="text-sm opacity-80">${l.t}</div>`:''}${showM?`<div class="font-bold" style="color:var(--g)">${l.m}</div>`:''}</div>`).join('')}</div>
+   <p class="text-xs mt-2">💡 ഏതെങ്കിലും ഉർദു വാക്കിൽ തൊട്ടാൽ അർത്ഥം അറിയാം.</p>
+   <div class="flex flex-wrap gap-2 justify-between mt-3">
+    <button class="btn" ${pg?'':'disabled style="opacity:.4"'} onclick="pg--;story()">◀ മുമ്പ്</button>
+    <button class="btn" style="background:#a5d8ff" onclick="readAll()"><i class="fa-solid fa-play"></i> മുഴുവൻ വായിക്കൂ</button>
+    <button class="btn" ${pg<2?'':'disabled style="opacity:.4"'} onclick="pg++;story()">അടുത്തത് ▶</button></div>
+   <div class="flex gap-2 mt-3 text-sm"><label><input type="checkbox" ${showT?'checked':''} onchange="showT=this.checked;story()"> Transliteration</label>
+    <label><input type="checkbox" ${showM?'checked':''} onchange="showM=this.checked;story()"> മലയാളം</label></div></div>`}
+function readAll(i=0){const L=S[pg].lines;if(i<L.length)say(L[i].u,()=>readAll(i+1))}
+
+/* ============ 5. DICTIONARY ============ */
+function dict(){const ks=Object.keys(D);
+  app.innerHTML=`<div class="card p-4"><h2 class="font-bold text-xl mb-2">📖 വാക്കുകളുടെ നിഘണ്ടു</h2>
+   <input id="q" class="w-full border-2 rounded-xl p-2 mb-3" placeholder="മലയാളം / English തിരയൂ… (ഉദാ: ചെടി, teacher)">
+   <div id="dl" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div></div>`;
+  const draw=f=>$('#dl').innerHTML=ks.filter(k=>!f||(k+D[k].join(' ')).toLowerCase().includes(f.toLowerCase())).map(k=>
+   `<button class="chip text-center" onclick="showWord('${k}')"><div>${D[k][2]}</div><div class="ur text-2xl">${k}</div><div class="text-xs">${D[k][1]}</div></button>`).join('');
+  draw();$('#q').oninput=e=>draw(e.target.value.trim())}
+
+/* ============ 6. GAMES ============ */
+function games(g){
+  app.innerHTML=`<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+   ${[['spell','🔤 അക്ഷരങ്ങൾ ചേർക്കൂ'],['match','🖼️ ചിത്രം ↔ വാക്ക്'],['color','🎨 നിറം ചേർക്കൂ (പേ.56)'],['order','🧩 വാക്യം ഒപ്പിക്കൂ'],['fill','✏️ یہ ___ ہے (പേ.58)']]
+   .map(([k,t])=>`<button class="btn" onclick="games('${k}')">${t}</button>`).join('')}</div><div id="g" class="card p-4"></div>`;
+  ({spell:spell,match:match,color:color,order:order,fill:fill}[g]||(()=>$('#g').innerHTML='<p class="text-center font-bold">മുകളിൽ നിന്ന് ഒരു കളി തിരഞ്ഞെടുക്കൂ 👆</p>'))()}
+
+/* --- Game A: drag / tap letters to spell the word --- */
+let sp={i:0,slots:[],chips:[]};
+function spell(){const w=SP[sp.i%SP.length];sp.slots=Array(w[1].length).fill(null);sp.chips=shuffle(w[1].map((l,k)=>({l,k,u:false})));spDraw()}
+function spDraw(){const w=SP[sp.i%SP.length],ch=k=>sp.chips.find(c=>c.k==k);
+  $('#g').innerHTML=`<p class="font-bold text-center">അക്ഷരങ്ങൾ വലിച്ചിടുക (അല്ലെങ്കിൽ തൊടുക). ഉർദു വലത്ത് നിന്ന് ഇടത്തോട്ട് ✍️</p>
+   <div class="text-center text-6xl">${D[w[0]][2]}</div><p class="text-center font-bold">${D[w[0]][1]} (${D[w[0]][0]})</p>
+   <div class="flex justify-center gap-2 my-3" dir="rtl">${sp.slots.map((k,p)=>`<div class="slot ur" ondragover="event.preventDefault()" ondrop="place(+event.dataTransfer.getData('text'),${p})" onclick="unplace(${p})">${k===null?'':ch(k).l}</div>`).join('')}</div>
+   <div class="flex justify-center flex-wrap gap-2 ur" dir="rtl">${sp.chips.map(c=>`<div class="chip ${c.u?'used':''}" draggable="true" ondragstart="event.dataTransfer.setData('text',${c.k})" onclick="place(${c.k})">${c.l}</div>`).join('')}</div>`}
+function place(k,pos){const c=sp.chips.find(c=>c.k==k);if(!c||c.u)return;if(pos===undefined)pos=sp.slots.indexOf(null);if(pos<0||sp.slots[pos]!==null)return;
+  c.u=true;sp.slots[pos]=k;spDraw();
+  if(!sp.slots.includes(null)){const w=SP[sp.i%SP.length],got=sp.slots.map(k=>sp.chips.find(c=>c.k==k).l).join('');
+    if(got===w[1].join('')){$('#g').innerHTML=`<div class="text-center"><div class="ur text-7xl">${w[0]}</div><p class="text-2xl font-bold">${D[w[0]][1]} ✔️</p>
+      <button class="btn mt-2" onclick="say('${w[0]}')">🔊</button> <button class="btn" onclick="sp.i++;spell()">അടുത്തത് ▶</button></div>`;say(w[0]);win()}
+    else{toast('ഒന്നുകൂടി ശ്രമിക്കൂ 🙂',1500);$('#g .flex').classList.add('shake');setTimeout(spell,600)}}}
+function unplace(p){const k=sp.slots[p];if(k===null)return;sp.chips.find(c=>c.k==k).u=false;sp.slots[p]=null;spDraw()}
+
+/* --- Game B: match pictures with Urdu words --- */
+let mt={};
+function match(){const w=shuffle(['پودا','پھول','تتلی','آم','گلاب','سورج مکھی','پتا','باغ']).slice(0,4);mt={w,pic:null,done:[],ws:shuffle(w)};mtDraw()}
+function mtDraw(){$('#g').innerHTML=`<p class="font-bold text-center">ചിത്രം തൊടൂ, പിന്നെ അതിന്റെ ഉർദു വാക്ക് തൊടൂ</p>
+  <div class="grid grid-cols-2 gap-3 my-3"><div class="space-y-2">${mt.w.map(x=>`<div class="chip text-center text-5xl ${mt.done.includes(x)?'ok':''} ${mt.pic===x?'sel':''}" onclick="mtPic('${x}')">${D[x][2]}</div>`).join('')}</div>
+  <div class="space-y-2">${mt.ws.map(x=>`<div class="chip ur text-center ${mt.done.includes(x)?'ok':''}" onclick="mtWord('${x}')">${x}</div>`).join('')}</div></div>`}
+function mtPic(x){if(!mt.done.includes(x)){mt.pic=x;mtDraw()}}
+function mtWord(x){if(!mt.pic||mt.done.includes(x))return;say(x);
+  if(x===mt.pic){mt.done.push(x);mt.pic=null;mtDraw();if(mt.done.length==4){win('എല്ലാം ശരി! 🌟');setTimeout(match,1800)}}else toast('അല്ല, വീണ്ടും നോക്കൂ 🙂',1200)}
+
+/* --- Game C: complete “یہ ___ غبارہ ہے” with the right colour (p.56) --- */
+let ci=0;
+function color(){const it=CI[ci%CI.length],f=it[3],form=c=>f&&CF[c]?CF[c]:c;
+  $('#g').innerHTML=`<p class="font-bold text-center">ശരിയായ നിറം തിരഞ്ഞെടുത്ത് വാക്യം പൂർത്തിയാക്കൂ</p>
+   <div class="text-center text-7xl my-2">${it[0]}</div>
+   <div class="ur text-center text-3xl" id="sent">یہ <span class="border-b-4 border-dashed px-6">&nbsp;&nbsp;&nbsp;</span> ${it[1]} ہے۔</div>
+   <p class="text-center text-sm">${D[it[1]][1]}</p>
+   <div class="flex flex-wrap justify-center gap-2 mt-3 ur">${Object.keys(COLHEX).map(c=>`<div class="chip" onclick="colPick('${c}','${it[2]}',${f?1:0})"><span style="display:inline-block;width:1rem;height:1rem;border-radius:50%;border:2px solid #000;background:${COLHEX[c]}"></span> ${form(c)}</div>`).join('')}</div>`}
+function colPick(c,ans,f){if(c===ans){const it=CI[ci%CI.length],form=f&&CF[c]?CF[c]:c,s=`یہ ${form} ${it[1]} ہے۔`;
+  $('#sent').innerHTML=`<b style="color:var(--g)">${s}</b>`;say(s);win();ci++;setTimeout(color,2200)}else{toast('ഈ നിറമല്ല 🙂',1200);$('#sent').classList.add('shake');setTimeout(()=>$('#sent').classList.remove('shake'),450)}}
+
+/* --- Game D: tap the words in the right order --- */
+let od={i:0,got:[],pool:[]};
+function order(){const s=OR[od.i%OR.length][0];od.s=s;od.got=[];od.pool=shuffle(tokens(s));odDraw()}
+function odDraw(){$('#g').innerHTML=`<p class="font-bold text-center">വാക്കുകൾ ശരിയായ ക്രമത്തിൽ തൊടൂ (വലത്ത് നിന്ന്)</p>
+  <div class="ur text-center text-3xl min-h-[5rem] border-4 border-dashed rounded-2xl p-2 my-3" dir="rtl">${od.got.join(' ')}</div>
+  <div class="flex flex-wrap justify-center gap-2 ur" dir="rtl">${od.pool.map((w,i)=>`<div class="chip" onclick="odPick(${i})">${w}</div>`).join('')}</div>
+  <div class="text-center mt-3"><button class="btn" onclick="order()">🔄 വീണ്ടും</button></div>`}
+function odPick(i){od.got.push(od.pool.splice(i,1)[0]);odDraw();
+  if(!od.pool.length){if(od.got.join(' ')===od.s){say(od.s+'۔');win();od.i++;setTimeout(order,2200)}else{toast('ക്രമം തെറ്റി, വീണ്ടും ശ്രമിക്കൂ 🙂',1500);setTimeout(order,900)}}}
+
+/* --- Game E: “یہ ___ ہے” sentence completion (p.58) --- */
+let fi=0;
+function fill(){const k=shuffle(['پودا','پھول','تتلی','آم','گلاب','باغ']),ans=k[0],opts=shuffle(k.slice(0,3));
+  $('#g').innerHTML=`<p class="font-bold text-center">ചിത്രം കണ്ട് വാക്യം പൂർത്തിയാക്കൂ</p>
+   <div class="text-center text-7xl my-2">${D[ans][2]}</div><div class="ur text-center text-3xl" id="fs">یہ ........ ہے۔</div>
+   <div class="flex justify-center gap-2 mt-3 ur">${opts.map(o=>`<div class="chip" onclick="fPick('${o}','${ans}')">${o}</div>`).join('')}</div>`}
+function fPick(o,a){if(o===a){const s=`یہ ${a} ہے۔`;$('#fs').innerHTML=`<b style="color:var(--g)">${s}</b>`;say(s);win();setTimeout(fill,2000)}else toast('ഇത് ശരിയല്ല, മറ്റൊന്ന് നോക്കൂ 🙂',1200)}
+
+/* ============ 7. QUIZ ============ */
+let qz={i:0,s:0};
+function quiz(){qz={i:0,s:0};qDraw()}
+function qDraw(){if(qz.i>=Q.length){const b=qz.s>=7?['🥇','സ്വർണ്ണ മെഡൽ'] : qz.s>=5?['🥈','വെള്ളി മെഡൽ']:['🥉','വെങ്കല മെഡൽ – ഒന്നുകൂടി ശ്രമിക്കൂ'];
+    app.innerHTML=`<div class="card p-6 text-center"><div class="text-8xl bob">${b[0]}</div><h2 class="text-2xl font-bold">${qz.s} / ${Q.length}</h2><p class="font-bold">${b[1]}</p><button class="btn mt-3" onclick="quiz()">🔄 വീണ്ടും കളിക്കൂ</button></div>`;
+    if(qz.s>=5&&window.confetti)confetti({particleCount:200,spread:100});return}
+  const q=Q[qz.i];app.innerHTML=`<div class="card p-4"><p class="text-sm font-bold">ചോദ്യം ${qz.i+1} / ${Q.length}</p>
+   <p class="text-xl font-bold my-2">${q[0]}</p>${q[1]?`<div class="ur text-3xl text-center"><span class="w" onclick="say('${q[1].replace(/___/g,'')}')">${q[1]} 🔊</span></div>`:''}
+   <div class="grid gap-2 mt-3">${q[2].map((o,i)=>`<button class="chip ur text-center" onclick="qAns(this,${i})">${o}</button>`).join('')}</div></div>`}
+function qAns(el,i){const q=Q[qz.i];document.querySelectorAll('#app .chip').forEach(c=>c.style.pointerEvents='none');
+  if(i===q[3]){el.classList.add('ok');qz.s++;win('ശരിയാണ്! ⭐')}else{el.classList.add('shake');el.style.background='#ffa8a8';toast('ശരിയായ ഉത്തരം: '+q[2][q[3]],2200)}
+  setTimeout(()=>{qz.i++;qDraw()},1800)}
+
+/* ============ 8. BIRTHDAY CARD (p.59) on a canvas ============ */
+let cd={to:'روبی',msg:'جنم دن مبارک ہو!',from:'ثانیہ',th:0};
+const TH=[['#fff0f6','#9c36b5','🌸🌹🌷'],['#fff9db','#e67700','🌻🌼🦋'],['#e7f5ff','#1971c2','🎈🎉🎁']];
+function card(){app.innerHTML=`<div class="card p-4"><h2 class="font-bold text-xl">🎂 ആശംസാ കാർഡ് (പേജ് 59)</h2>
+  <p class="text-sm mb-2">ثانیہ റൂബിക്ക് കാർഡ് ഉണ്ടാക്കി. നിങ്ങളുടെ കൂട്ടുകാരനായി കാർഡ് ഉണ്ടാക്കൂ!</p>
+  <canvas id="cv" width="600" height="720" class="w-full max-w-sm mx-auto rounded-2xl border-4 border-black"></canvas>
+  <div class="grid gap-2 mt-3">
+   <label class="font-bold">കൂട്ടുകാരന്റെ പേര് (To)<input id="c1" class="ur w-full border-2 rounded-xl p-1 text-xl" dir="rtl" value="${cd.to}"></label>
+   <label class="font-bold">സന്ദേശം<input id="c2" class="ur w-full border-2 rounded-xl p-1 text-xl" dir="rtl" value="${cd.msg}"></label>
+   <label class="font-bold">നിങ്ങളുടെ പേര് (From)<input id="c3" class="ur w-full border-2 rounded-xl p-1 text-xl" dir="rtl" value="${cd.from}"></label>
+   <div class="text-sm font-bold">ഉർദു കീബോർഡ് ഇല്ലേ? തൊട്ടാൽ സന്ദേശം മാറും:</div>
+   <div class="flex flex-wrap gap-2 ur">${['جنم دن مبارک ہو!','شکریہ!','آپ کو مبارک ہو!','آداب!'].map(m=>`<span class="chip text-lg" onclick="$('#c2').value='${m}';cdUp()">${m}</span>`).join('')}</div>
+   <div class="flex flex-wrap gap-2 ur">${['روبی','ثانیہ','دوست','امی','ٹیچر'].map(m=>`<span class="chip text-lg" onclick="$('#c1').value='${m}';cdUp()">${m}</span>`).join('')}</div>
+   <div class="flex gap-2">${TH.map((t,i)=>`<button class="btn" onclick="cd.th=${i};cdUp()">${t[2]}</button>`).join('')}</div>
+   <div class="flex gap-2"><button class="btn" onclick="say(cd.msg)">🔊 വായിക്കൂ</button><button class="btn" style="background:#b2f2bb" onclick="cdSave()"><i class="fa-solid fa-download"></i> ചിത്രം സേവ് ചെയ്യൂ</button></div></div></div>`;
+  ['c1','c2','c3'].forEach(id=>$('#'+id).oninput=cdUp);
+  (document.fonts?document.fonts.load('40px "Noto Nastaliq Urdu"'):Promise.resolve()).then(cdUp,cdUp)}
+function cdUp(){cd.to=$('#c1').value;cd.msg=$('#c2').value;cd.from=$('#c3').value;const c=$('#cv').getContext('2d'),t=TH[cd.th];
+  c.fillStyle=t[0];c.fillRect(0,0,600,720);c.strokeStyle=t[1];c.lineWidth=6;c.setLineDash([16,10]);c.strokeRect(24,24,552,672);c.setLineDash([]);
+  c.font='70px serif';c.textAlign='center';c.fillText(t[2],300,110);c.fillText(t[2],300,690);
+  c.direction='rtl';c.textAlign='center';c.font='bold 48px "Noto Nastaliq Urdu",serif';
+  c.fillStyle='#e63946';c.fillText('میری پیاری',300,240);c.fillStyle=t[1];c.fillText('دوست '+cd.to+'!',300,340);
+  c.fillStyle='#1b2a41';c.font='bold 54px "Noto Nastaliq Urdu",serif';c.fillText(cd.msg,300,460);
+  c.fillStyle=t[1];c.font='bold 44px "Noto Nastaliq Urdu",serif';c.fillText(cd.from,300,580)}
+function cdSave(){$('#cv').toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='birthday-card.png';a.click();win('കാർഡ് സേവ് ചെയ്തു! 🎂')})}
+
+story();   // start on the story tab
+</script>
+</body>
+</html>
